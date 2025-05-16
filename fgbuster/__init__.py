@@ -19,3 +19,5 @@ from .separation_recipes import *
 from .component_model import *
 from .mixingmatrix import *
 from .cosmology import *
+from .harmonic_operators import *
+from .separation_recipes_mixed import *

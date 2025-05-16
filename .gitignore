@@ -106,3 +106,5 @@ ENV/
 
 # pylint
 pylintrc
+
+.vscode

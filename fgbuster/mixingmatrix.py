@@ -15,6 +15,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+import healpy as hp
 
 
 __all__ = [
@@ -77,6 +78,8 @@ class MixingMatrix(tuple):
         return res
 
     def evaluator(self, nu, unpack=(lambda x: x.reshape((-1,)))):
+        """ Pixel independent mixing matrix evaluator
+        """
         if self.n_param:
             def f(param_array):
                 param_array = np.array(param_array)
@@ -128,3 +131,20 @@ class MixingMatrix(tuple):
             param_array = np.array(param_array)
             return self.diff_diff(nu, *[p for p in unpack(param_array)])
         return f
+
+    def get_pixel_dependent_mixing_matrix(self, nu, nside, betas_per_patch, betas_nsides):
+        """ Evaluates the pixel dependent mixing matrix
+        nu: frequencies
+        nside: maps nside
+        betas_per_patch: spectral parameter values in each patch
+        nsides_multires: list of the nside of the patches for each spectral parameter
+        """
+        betas_per_pixel = np.zeros((len(betas_nsides), hp.nside2npix(nside)))
+        A_ev = self.evaluator(nu)
+        for i, ns_multires in enumerate(betas_nsides):
+            print(str(i)+') upgrading from ns =', ns_multires, 'to ns =', nside)
+            betas_per_pixel[i] = hp.ud_grade(betas_per_patch[i], nside)
+        A_ev_all = [A_ev(betas_per_pixel[:,item]) for item in range(hp.nside2npix(nside))]
+        A_ev_all_arr = np.stack(A_ev_all, axis=-1)
+        
+        return A_ev_all_arr, betas_per_pixel
